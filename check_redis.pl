@@ -415,6 +415,7 @@
 
 use strict;
 use IO::Socket;
+use IO::Socket::SSL;
 use Time::HiRes;
 use Text::ParseWords;
 use Getopt::Long qw(:config no_ignore_case);
@@ -2664,7 +2665,7 @@ $redis = Redis-> new (
   server => $dsn,
   'debug' => (defined($o_verb))?1:0,
   ssl => $o_use_tls?1:0,
-  SSL_verify_mode => $o_tls_no_verification? IO::Socket::SSL::SSL_VERIFY_NONE : IO::Socket::SSL::SSL_VERIFY_NONE,
+  SSL_verify_mode => $o_tls_no_verification? SSL_VERIFY_NONE : SSL_VERIFY_NONE,
  );
 
 if ($PASSWORD) {
