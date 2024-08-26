@@ -510,6 +510,8 @@ my $PERF_OK_STATUS_REGEX = 'GAUGE|COUNTER|^DATA$|BOOLEAN';
 
 my $o_host=     undef;		# hostname
 my $o_port=     undef;		# port
+my $o_use_tls=  0;        # use tls (true) or not (false), default is false
+my $o_tls_no_verification = 0; # whether to verify that the TLS certificate of the Redis server is trusted
 my $o_pwfile=   undef;          # password file
 my $o_password= undef;		# password as parameter
 my $o_database= undef;		# database name (usually a number)
@@ -572,6 +574,10 @@ General and Server Connection Options:
    Hostname or IP Address to check
  -p, --port=INTEGER
    port number (default: 6379)
+ -s --ssl --tls
+   Use TLS to connect to redis 
+ --tls_no_verification
+   Disable certificate verification for TLS connections
  -D, --database=NAME
    optional database name (usually a number), needed for --query but otherwise not needed
  -x, --password=STRING
@@ -2506,11 +2512,14 @@ sub check_options {
     my $nlib = shift;
     my %Options = ();
     Getopt::Long::Configure("bundling");
+
     GetOptions(\%Options,
    	'v:s'	=> \$o_verb,		'verbose:s' => \$o_verb, "debug:s" => \$o_verb,
         'h'     => \$o_help,            'help'          => \$o_help,
         'H:s'   => \$o_host,            'hostname:s'    => \$o_host,
         'p:i'   => \$o_port,            'port:i'        => \$o_port,
+        's'     => \$o_use_tls,         'ssl'           => \$o_use_tls, 'tls' => \$o_use_tls,
+        'tls_no_verification' => \$o_tls_no_verification,
         'C:s'   => \$o_pwfile,          'credentials:s' => \$o_pwfile,
         'x:s'   => \$o_password,	'password:s'	=> \$o_password,
 	'D:s'	=> \$o_database,	'database:s'	=> \$o_database,
@@ -2651,7 +2660,12 @@ my $dsn = $HOSTNAME.":".$PORT;
 $nlib->verb("connecting to $dsn");
 $start_time = [ Time::HiRes::gettimeofday() ] if defined($o_timecheck);
 
-$redis = Redis-> new ( server => $dsn, 'debug' => (defined($o_verb))?1:0 );
+$redis = Redis-> new (
+  server => $dsn,
+  'debug' => (defined($o_verb))?1:0,
+  ssl => $o_use_tls?1:0,
+  SSL_verify_mode => $o_tls_no_verification? IO::Socket::SSL::SSL_VERIFY_NONE : IO::Socket::SSL::SSL_VERIFY_NONE,
+ );
 
 if ($PASSWORD) {
     $redis->auth($PASSWORD);
